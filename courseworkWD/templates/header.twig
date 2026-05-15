@@ -1,0 +1,25 @@
+<header>
+    <img src="images/logos/Lancasters-logos_white_c.png" alt="Home Page logo" style="height: 50px;">
+    <nav>
+        <ul>
+            <li><a href="index.php" class="{{ current_page == 'index.php' ? 'active' : '' }}">Home</a></li>
+            <li><a href="about.php" class="{{ current_page == 'about.php' ? 'active' : '' }}">About</a></li>
+            <li><a href="gallery.php" class="{{ current_page == 'gallery.php' ? 'active' : '' }}">Gallery</a></li>
+            <li><a href="careers.php" class="{{ current_page == 'careers.php' ? 'active' : '' }}">Careers</a></li>
+            <li><a href="menu.php" class="{{ current_page == 'menu.php' ? 'active' : '' }}">Menu</a></li>
+            <li><a href="reviews.php" class="{{ current_page == 'reviews.php' ? 'active' : '' }}">Reviews</a></li>
+        </ul>
+    </nav>
+
+    <div class="nav-right">
+        {% if user_is_logged_in %}
+            <a href="logout.php" class="btn">Logout</a>
+            {% if user_role == 'staff' %}
+                <a href="staff_dashboard.php" class="btn btn-dashboard">Dashboard</a>
+            {% endif %}
+        {% else %}
+            <a href="signup.php" class="btn btn-signup">Sign Up</a>
+            <a href="login.php" class="btn">Login</a>
+        {% endif %}
+    </div>
+</header>

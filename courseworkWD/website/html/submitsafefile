@@ -1,0 +1,107 @@
+<?php
+session_start(); // Start the session for user authentication
+
+$servername = "localhost";
+$username = "webdev";
+$password_db = "W3bD£velopment";
+$dbname = "reservations";
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+    // Check if the user is logged in
+    if (!isset($_SESSION['user_id'])) {
+        die("Unauthorized access. Please log in to make a reservation.");
+    }
+
+    // Debugging: Print the POST data
+    file_put_contents('debug.log', print_r($_POST, true));
+
+    $user_id = $_SESSION['user_id']; // Retrieve user ID from session
+    $reservation_date = $_POST['date'];
+    $reservation_time = $_POST['time'];
+    $guest_count = $_POST['guests'];
+    $lead_name = $_POST['lead_name'];
+    $email = $_POST['email'];
+    $phone = $_POST['phone'];
+    $meal = $_POST['meal']; // Meal type: breakfast, lunch, dinner
+    $requirements = isset($_POST['requirements']) ? $_POST['requirements'] : null;
+
+    // Connect to database
+    $conn = new mysqli($servername, $username, $password_db, $dbname);
+    if ($conn->connect_error) {
+        die("Connection failed: " . $conn->connect_error);
+    }
+
+    // Step 1: Manually validate `service_id` from the `services` table
+    $day_of_week = date('l', strtotime($reservation_date)); // Convert date to day of the week
+    $service_query = $conn->prepare("
+        SELECT id, total_tables 
+        FROM services 
+        WHERE service_name = ? AND day_of_week = ?
+    ");
+    $service_query->bind_param("ss", $meal, $day_of_week);
+    $service_query->execute();
+    $result = $service_query->get_result();
+
+    if ($result->num_rows === 0) {
+        die("No available service found for the selected meal and day.");
+    }
+
+    $service = $result->fetch_assoc();
+    $service_id = $service['id'];
+    $total_tables = $service['total_tables'];
+    $service_query->close();
+
+    // Step 2: Check if the selected time slot has enough tables
+    $reserved_query = $conn->prepare("
+    SELECT reservation_time, SUM(CEIL(guest_count / 2)) AS reserved_tables 
+    FROM reservations 
+    WHERE service_id = ? AND reservation_date = ? 
+    GROUP BY reservation_time
+    ");
+    $reserved_query->bind_param("is", $service_id, $reservation_date);
+    $reserved_query->execute();
+    $reserved_slots = $reserved_query->get_result();
+
+    $reserved = [];
+    while ($row = $reserved_slots->fetch_assoc()) {
+    $reserved[$row['reservation_time']] = $row['reserved_tables'];
+    }
+    $reserved_query->close();
+
+    // Check if the selected time has enough available tables
+    $tables_needed = ceil($guest_count / 2);
+    if (isset($reserved[$reservation_time]) && $reserved[$reservation_time] + $tables_needed > $total_tables) {
+    die("Not enough tables available for the selected time slot.");
+    }
+
+    file_put_contents('debug_reservations.log', "Reserved Slots:\n" . print_r($reserved, true), FILE_APPEND);
+
+
+
+    // Step 3: Insert reservation into the `reservations` table
+    try {
+        $stmt = $conn->prepare("
+            INSERT INTO reservations (user_id, service_id, reservation_date, reservation_time, guest_count, lead_name, email, phone, requirements)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ");
+        $stmt->bind_param("iississss", $user_id, $service_id, $reservation_date, $reservation_time, $guest_count, $lead_name, $email, $phone, $requirements);
+    
+        if ($stmt->execute()) {
+            echo "Reservation successfully made!";
+        } else {
+            throw new Exception($stmt->error);
+        }
+    } catch (Exception $e) {
+        error_log("SQL Error: " . $e->getMessage());
+        echo "Error: " . $e->getMessage();
+        exit();
+
+    }
+
+    $stmt->close();
+    $conn->close();
+} else {
+    echo "Invalid request method.";
+}
+?>

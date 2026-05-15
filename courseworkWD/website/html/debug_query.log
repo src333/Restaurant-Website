@@ -1,0 +1,12 @@
+SQL Query: 
+        SELECT reservation_time, SUM(CEIL(guest_count / 2)) AS reserved_tables 
+        FROM reservations 
+        WHERE service_id = 1 AND reservation_date = '2025-04-11' 
+        GROUP BY reservation_time
+    
+SQL Query: 
+        SELECT reservation_time, SUM(CEIL(guest_count / 2)) AS reserved_tables 
+        FROM reservations 
+        WHERE service_id = 1 AND reservation_date = '2025-04-11' 
+        GROUP BY reservation_time
+    

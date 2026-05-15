@@ -1,0 +1,11 @@
+Array
+(
+    [lead_name] => rashel
+    [email] => rashel@gmail.com
+    [phone] => 07833144079
+    [date] => 2025-01-18
+    [meal] => breakfast
+    [guests] => 2
+    [time] => 07:30
+    [requirements] => take 2
+)

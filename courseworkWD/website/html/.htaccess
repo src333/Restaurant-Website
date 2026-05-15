@@ -1,0 +1,10 @@
+<Limit GET POST>
+    Require all granted
+</Limit>
+
+# Enable URL rewriting (if needed for clean URLs)
+RewriteEngine On
+
+<Files "db_connect.php">
+    Require all denied
+</Files>
